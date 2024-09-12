@@ -2,7 +2,7 @@ import Chat from "@/ui/Chat";
 
 export default function Home() {
   return (
-    <div>
+    <div className="py-4">
       <Chat />
     </div>
   );

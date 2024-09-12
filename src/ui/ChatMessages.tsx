@@ -1,4 +1,5 @@
-import React from "react";
+// "use effect";
+import React, { useEffect, useRef } from "react";
 import Message from "./Message";
 import { Message as MessageType } from "@/interface/messages";
 
@@ -7,7 +8,14 @@ interface ChatMessagesProps {
 }
 
 export default function ChatMessages({ messages }: ChatMessagesProps) {
-  console.log(messages);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
   return (
     <div
       className="flex-1 overflow-auto"
@@ -39,12 +47,13 @@ export default function ChatMessages({ messages }: ChatMessagesProps) {
         {messages.map((msg, index) => (
           <Message
             key={index}
-            sender={msg.sender}
             message={msg.message}
             time={msg.time}
             isSent={msg.isSent}
           />
         ))}
+
+        <div ref={messagesEndRef} />
       </div>
     </div>
   );
