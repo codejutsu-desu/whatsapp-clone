@@ -1,35 +1,13 @@
 import React from "react";
 import Message from "./Message";
+import { Message as MessageType } from "@/interface/messages";
 
-export default function ChatMessages() {
-  const messages = [
-    {
-      sender: { name: "Sylvester Stallone", color: "text-teal" },
-      message: "Hi everyone! Glad you could join! I am making a new movie.",
-      time: "12:45 pm",
-    },
-    {
-      sender: { name: "Tom Cruise", color: "text-purple" },
-      message: "Hi all! I have one question for the movie",
-      time: "12:45 pm",
-    },
-    {
-      sender: { name: "Harrison Ford", color: "text-orange" },
-      message: "Again?",
-      time: "12:45 pm",
-    },
-    {
-      sender: { name: "Russell Crowe", color: "text-orange" },
-      message: "Is Andrés coming for this one?",
-      time: "12:45 pm",
-    },
-    {
-      sender: { name: "Sylvester Stallone", color: "text-teal" },
-      message: "He is. Just invited him to join.",
-      time: "12:45 pm",
-    },
-    { message: "Glad to be here! :D", time: "12:45 pm", isSent: true },
-  ];
+interface ChatMessagesProps {
+  messages: MessageType[];
+}
+
+export default function ChatMessages({ messages }: ChatMessagesProps) {
+  console.log(messages);
   return (
     <div
       className="flex-1 overflow-auto"
@@ -42,11 +20,10 @@ export default function ChatMessages() {
             className="rounded py-2 px-4"
             style={{ backgroundColor: "#DDECF2" }}
           >
-            <p className="text-sm uppercase">February 20, 2018</p>
+            <p className="text-sm uppercase">February 20, 2021</p>
           </div>
         </div>
 
-        {/* Encryption Notice */}
         <div className="flex justify-center mb-4">
           <div
             className="rounded py-2 px-4"
