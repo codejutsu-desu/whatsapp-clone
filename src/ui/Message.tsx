@@ -11,7 +11,6 @@ export default function Message({ message, time, isSent }: MessageProps) {
     ? { backgroundColor: "#E2F7CB" }
     : { backgroundColor: "#F2F2F2" };
 
-  // Trim any leading/trailing whitespace for accurate checking
   const trimmedMessage = message.trim();
 
   // Detect if the message is an audio blob URL
