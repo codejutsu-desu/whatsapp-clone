@@ -8,9 +8,9 @@ export default function Register() {
 
   const handleRegister = async () => {
     try {
-      // Start registration
+      // Step 1: Start registration
       const response = await fetch(
-        "http://localhost:5000/auth/register/start",
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/register/start`,
         {
           method: "POST",
           credentials: "include",
@@ -28,11 +28,11 @@ export default function Register() {
       const options = await response.json();
       console.log("Generated options:", options);
 
-      // Create a credential directly with options
+      // Step 2: Create a credential with options
       const credential = await startRegistration(options);
       console.log(credential);
 
-      // Format the credential correctly
+      // Step 3: Format the credential
       const formattedCredential = {
         rp: "localhost",
         id: credential.id,
@@ -44,13 +44,12 @@ export default function Register() {
         },
       };
 
-      // Send the formatted credential to the backend for verification
+      // Step 4: Send the credential to the backend for verification
       const verifyResponse = await fetch(
-        "http://localhost:5000/auth/register/verify",
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/register/verify`,
         {
           method: "POST",
           credentials: "include",
-
           headers: {
             "Content-Type": "application/json",
           },
@@ -67,12 +66,12 @@ export default function Register() {
       setMessage(verifyData.message);
     } catch (error) {
       console.error("Error during registration process:", error);
-      setMessage("Registration failed: " + error.message);
+      setMessage("Registration failed: " + error);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-between gap-2">
+    <div className="flex flex-col items-center justify-between gap-2 pt-20">
       <div className="text-2xl text-center">Register into the app</div>
       <input
         type="text"

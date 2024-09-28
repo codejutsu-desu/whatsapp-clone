@@ -10,14 +10,17 @@ export default function Login() {
   const handleLogin = async () => {
     try {
       // Step 1: Start login
-      const response = await fetch("http://localhost:5000/auth/login/start", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/login/start`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to start login");
@@ -37,7 +40,7 @@ export default function Login() {
 
       // Step 3: Send the credential to your backend for verification
       const verifyResponse = await fetch(
-        "http://localhost:5000/auth/login/verify",
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/login/verify`,
         {
           method: "POST",
           headers: {
@@ -63,7 +66,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-between gap-2">
+    <div className="flex flex-col items-center justify-between gap-2 pt-20">
       <div className="text-2xl text-center">Login into the app</div>
       <input
         type="text"
