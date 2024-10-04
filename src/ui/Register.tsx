@@ -34,7 +34,7 @@ export default function Register() {
 
       // Step 3: Format the credential
       const formattedCredential = {
-        rp: "localhost",
+        rp: "labs1.kpay.uk",
         id: credential.id,
         rawId: credential.rawId,
         type: credential.type,
