@@ -66,7 +66,7 @@ export default function Register() {
       setMessage(verifyData.message);
     } catch (error) {
       console.error("Error during registration process:", error);
-      console.log("here is the error");
+      
       setMessage("Registration failed: " + error);
     }
   };
