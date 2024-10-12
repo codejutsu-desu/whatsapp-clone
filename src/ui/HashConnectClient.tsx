@@ -4,11 +4,13 @@ import {
   getConnectedAccountIds,
   hc,
   hcInitPromise,
+  initHashConnect,
 } from "../services/hashconnect";
 
 export const HashConnectClient = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [accountIds, setAccountIds] = useState<string[]>([]);
+  const [selectedNetwork, setSelectedNetwork] = useState("testnet"); // Default to testnet
 
   const syncWithHashConnect = () => {
     const connectedAccountIds = getConnectedAccountIds();
@@ -46,7 +48,10 @@ export const HashConnectClient = () => {
   }, []);
 
   const handleConnectDisconnect = async () => {
-    await hcInitPromise; // Wait for the initialization promise
+    if (!isConnected) {
+      // Initialize HashConnect with the selected network (testnet/mainnet)
+      await initHashConnect(selectedNetwork);
+    }
 
     if (isConnected) {
       if (accountIds.length > 0) {
@@ -62,14 +67,28 @@ export const HashConnectClient = () => {
 
   return (
     <div className="flex items-center justify-center mt-4">
-      <button
-        className="bg-blue-500 text-white py-2 px-4 rounded"
-        onClick={handleConnectDisconnect}
-      >
-        {isConnected
-          ? `Disconnect Account${accountIds.length > 1 ? "s" : ""}`
-          : "Connect"}
-      </button>
+      <div className="flex flex-col items-center">
+        {/* Dropdown for selecting network */}
+        <select
+          className="mb-4 bg-gray-200 p-2 rounded"
+          value={selectedNetwork}
+          onChange={(e) => setSelectedNetwork(e.target.value)}
+          disabled={isConnected} // Disable network selection when connected
+        >
+          <option value="testnet">Testnet</option>
+          <option value="mainnet">Mainnet</option>
+        </select>
+
+        {/* Connect/Disconnect Button */}
+        <button
+          className="bg-blue-500 text-white py-2 px-4 rounded"
+          onClick={handleConnectDisconnect}
+        >
+          {isConnected
+            ? `Disconnect Account${accountIds.length > 1 ? "s" : ""}`
+            : "Connect"}
+        </button>
+      </div>
     </div>
   );
 };

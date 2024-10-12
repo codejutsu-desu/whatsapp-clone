@@ -9,32 +9,31 @@ const appMetadata = {
   url: "https://example.com", // Dummy URL
 };
 
-const net = "testnet"; // or "mainnet"
+// Project ID
+const projectId = "91a0448a28a02b97186e214ba8bf291a"; // Your actual project ID
 
-// Check if the project ID is defined
-const projectId = "91a0448a28a02b97186e214ba8bf291a"; // Ensure this is your actual project ID
+// Initialize HashConnect object (declared outside to maintain event listeners)
+export let hc: HashConnect;
+export let hcInitPromise: Promise<void>;
 
-// Initialize HashConnect
-export const hc = new HashConnect(
-  LedgerId.fromString(net),
-  projectId,
-  appMetadata,
-  true // Set to true to use local storage for pairing
-);
+// Function to initialize HashConnect with the selected network
+export const initHashConnect = (network: string) => {
+  const ledgerId = LedgerId.fromString(network); // Select network (mainnet/testnet)
+  hc = new HashConnect(ledgerId, projectId, appMetadata, true);
 
-console.log(hc);
+  hcInitPromise = hc
+    .init()
+    .then(() => {
+      console.log(`HashConnect initialized successfully on ${network}`);
+    })
+    .catch((error) => {
+      console.error("HashConnect init error:", error);
+    });
+
+  return hcInitPromise;
+};
 
 // Function to get connected accounts
 export const getConnectedAccountIds = () => {
   return hc.connectedAccountIds || [];
 };
-
-// Initialize HashConnect promise
-export const hcInitPromise = hc
-  .init()
-  .then(() => {
-    console.log("HashConnect init successful");
-  })
-  .catch((error) => {
-    console.error("HashConnect init error:", error);
-  });
