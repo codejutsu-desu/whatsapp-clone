@@ -1,94 +1,115 @@
 "use client";
+
 import { useEffect, useState } from "react";
-import {
-  getConnectedAccountIds,
-  hc,
-  hcInitPromise,
-  initHashConnect,
-} from "../services/hashconnect";
+import { Core } from "@walletconnect/core";
+import { WalletKit, WalletKitTypes } from "@reown/walletkit";
 
 export const HashConnectClient = () => {
-  const [isConnected, setIsConnected] = useState(false);
-  const [accountIds, setAccountIds] = useState<string[]>([]);
-  const [selectedNetwork, setSelectedNetwork] = useState("testnet"); // Default to testnet
+  const [kit, setKit] = useState(null);
+  const [uri, setUri] = useState("");
+  const [selectedNetwork, setSelectedNetwork] = useState("hedera:testnet"); // State to store network selection
+  const [qrCodeVisible, setQrCodeVisible] = useState(false);
 
-  const syncWithHashConnect = () => {
-    const connectedAccountIds = getConnectedAccountIds();
-    console.log("Connected Account IDs: ", connectedAccountIds);
+  const initializeWalletKit = async () => {
+    try {
+      const core = new Core({
+        projectId: "53db41bfb52ee26d9a304025f741ee18",
+      });
 
-    if (connectedAccountIds.length > 0) {
-      setAccountIds(connectedAccountIds.map((o) => o.toString()));
-      setIsConnected(true);
-    } else {
-      setAccountIds([]);
-      setIsConnected(false);
+      const walletKit = await WalletKit.init({
+        core,
+        metadata: {
+          name: "Demo app",
+          description: "Demo Client as Wallet/Peer",
+          url: "https://reown.com/walletkit",
+          icons: [],
+        },
+      });
+
+      console.log("WalletKit initialized:", walletKit);
+      setKit(walletKit);
+    } catch (error) {
+      console.error("Error initializing WalletKit:", error);
+    }
+  };
+
+  const handleNetworkChange = (event) => {
+    setSelectedNetwork(event.target.value); // Set network based on user selection
+  };
+
+  const handleConnect = async () => {
+    // Check if kit was initialized successfully
+    if (!kit) {
+      console.error("WalletKit not initialized yet");
+      return;
+    }
+
+    // Create pairing URI and initiate pairing
+    const { topic, uri } = await kit.core.pairing.create();
+    setUri(uri); // Display QR code
+    setQrCodeVisible(true);
+    console.log("Generated pairing URI:", uri);
+    console.log("Pairing topic:", topic);
+    try {
+      // Listen for session proposal only after WalletKit is initialized
+      kit.on(
+        "session_proposal",
+        async (proposal: WalletKitTypes.SessionProposal) => {
+          console.log("Session proposal received:", proposal);
+
+          try {
+            const session = await kit.approveSession({
+              id: proposal.id,
+            });
+            console.log("Session approved:", session);
+          } catch (error) {
+            console.error("Error approving session:", error);
+          }
+        }
+      );
+
+      await kit.pair({ uri });
+      console.log(`Pairing initiated on ${selectedNetwork} with URI:`, uri);
+    } catch (error) {
+      console.error("Failed to pair with wallet:", error);
     }
   };
 
   useEffect(() => {
-    hcInitPromise
-      .then(() => {
-        console.log("HashConnect initialized successfully", hc);
-        syncWithHashConnect(); // Ensure this is called after successful init
-      })
-      .catch((error) => {
-        console.error("Error initializing HashConnect:", error);
-      });
-
-    // Setting up event listeners
-    hc.pairingEvent.on(syncWithHashConnect);
-    hc.disconnectionEvent.on(syncWithHashConnect);
-    hc.connectionStatusChangeEvent.on(syncWithHashConnect);
-
-    return () => {
-      hc.pairingEvent.off(syncWithHashConnect);
-      hc.disconnectionEvent.off(syncWithHashConnect);
-      hc.connectionStatusChangeEvent.off(syncWithHashConnect);
-    };
+    // Initialize WalletKit on mount
+    initializeWalletKit();
   }, []);
 
-  const handleConnectDisconnect = async () => {
-    if (!isConnected) {
-      // Initialize HashConnect with the selected network (testnet/mainnet)
-      await initHashConnect(selectedNetwork);
-    }
-
-    if (isConnected) {
-      if (accountIds.length > 0) {
-        hc.disconnect(); // Disconnecting logic
-        console.log("Disconnected");
-      }
-    } else {
-      console.log("Opening pairing modal...");
-      hc.openPairingModal(); // This should generate the pairing string
-      console.log("Pairing string created:", hc.pairingString);
-    }
-  };
-
   return (
-    <div className="flex items-center justify-center mt-4">
-      <div className="flex flex-col items-center">
-        {/* Dropdown for selecting network */}
-        <select
-          className="mb-4 bg-gray-200 p-2 rounded"
-          value={selectedNetwork}
-          onChange={(e) => setSelectedNetwork(e.target.value)}
-          disabled={isConnected} // Disable network selection when connected
-        >
-          <option value="testnet">Testnet</option>
-          <option value="mainnet">Mainnet</option>
-        </select>
+    <div className="flex flex-col items-center justify-center pt-4">
+      {/* Dropdown to select the network (mainnet or testnet) */}
+      <select
+        className="mb-4 bg-gray-200 p-2 rounded"
+        value={selectedNetwork}
+        onChange={handleNetworkChange} // Handle network change
+      >
+        <option value="hedera:testnet">Testnet</option>
+        <option value="hedera:mainnet">Mainnet</option>
+      </select>
 
-        {/* Connect/Disconnect Button */}
-        <button
-          className="bg-blue-500 text-white py-2 px-4 rounded"
-          onClick={handleConnectDisconnect}
-        >
-          {isConnected
-            ? `Disconnect Account${accountIds.length > 1 ? "s" : ""}`
-            : "Connect"}
-        </button>
-      </div>
+      <button
+        className="bg-green-500 text-white py-2 px-4 rounded mt-4"
+        onClick={handleConnect}
+      >
+        Connect to Wallet
+      </button>
+
+      {qrCodeVisible && uri && (
+        <div className="mt-4">
+          <p className="mb-2">Scan this QR code to connect:</p>
+          <img
+            src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(
+              uri
+            )}`}
+            alt="QR Code"
+          />
+        </div>
+      )}
     </div>
   );
 };

@@ -67,7 +67,9 @@ export default function Login() {
 
   return (
     <div className="flex flex-col items-center justify-between gap-2 pt-20">
-      <div className="text-2xl text-center">Login into the app</div>
+      <div className="text-2xl text-center text-gray-700">
+        Login into the app
+      </div>
       <input
         type="text"
         placeholder="Enter your username"

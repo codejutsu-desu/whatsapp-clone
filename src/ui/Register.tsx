@@ -1,10 +1,12 @@
 "use client";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation"; // Import useRouter
 import { startRegistration } from "@simplewebauthn/browser";
 
 export default function Register() {
   const [username, setUsername] = useState("");
   const [message, setMessage] = useState("");
+  const router = useRouter(); // Initialize useRouter
 
   const handleRegister = async () => {
     try {
@@ -34,7 +36,8 @@ export default function Register() {
 
       // Step 3: Format the credential
       const formattedCredential = {
-        rp: "labs1.kpay.uk",
+        //change to labs1.kpay.uk
+        rp: "localhost",
         id: credential.id,
         rawId: credential.rawId,
         type: credential.type,
@@ -57,23 +60,27 @@ export default function Register() {
         }
       );
 
-      if (!verifyResponse.ok) {
-        throw new Error("Failed to verify credential");
-      }
+      console.log(verifyResponse);
 
       const verifyData = await verifyResponse.json();
       console.log(verifyData);
       setMessage(verifyData.message);
+
+      // Redirect to login page after successful registration
+      if (verifyData.success) {
+        router.push("/login"); // Redirect to login page
+      }
     } catch (error) {
       console.error("Error during registration process:", error);
-      
       setMessage("Registration failed: " + error);
     }
   };
 
   return (
     <div className="flex flex-col items-center justify-between gap-2 pt-20">
-      <div className="text-2xl text-center">Register into the app</div>
+      <div className="text-2xl text-center text-gray-700">
+        Register into the app
+      </div>
       <input
         type="text"
         placeholder="Enter your username"
