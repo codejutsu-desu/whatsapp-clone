@@ -1,16 +1,15 @@
 "use client";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation"; // Import useRouter
+import { useRouter } from "next/navigation";
 import { startRegistration } from "@simplewebauthn/browser";
 
 export default function Register() {
   const [username, setUsername] = useState("");
   const [message, setMessage] = useState("");
-  const router = useRouter(); // Initialize useRouter
+  const router = useRouter();
 
   const handleRegister = async () => {
     try {
-      // Step 1: Start registration
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/auth/register/start`,
         {
@@ -28,16 +27,31 @@ export default function Register() {
       }
 
       const options = await response.json();
-      console.log("Generated options:", options);
 
-      // Step 2: Create a credential with options
-      const credential = await startRegistration(options);
-      console.log(credential);
+      // Convert challenge to base64url string and user.id to base64url string
+      const publicKeyOptions = {
+        challenge: options.challenge,
+        rp: options.rp,
+        user: {
+          id: options.user.id,
+          name: options.user.name,
+          displayName: options.user.displayName,
+        },
+        pubKeyCredParams: options.pubKeyCredParams,
+        timeout: options.timeout,
+        attestation: options.attestation,
+        authenticatorSelection: options.authenticatorSelection,
+        excludeCredentials: options.excludeCredentials,
+        extensions: options.extensions,
+      };
 
-      // Step 3: Format the credential
+      // Wrap the options in optionsJSON
+      const registrationOptions = { optionsJSON: publicKeyOptions };
+
+      // Pass the formatted options to startRegistration
+      const credential = await startRegistration(registrationOptions);
+
       const formattedCredential = {
-        //change to labs1.kpay.uk
-        rp: "localhost",
         id: credential.id,
         rawId: credential.rawId,
         type: credential.type,
@@ -47,7 +61,6 @@ export default function Register() {
         },
       };
 
-      // Step 4: Send the credential to the backend for verification
       const verifyResponse = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/auth/register/verify`,
         {
@@ -60,15 +73,11 @@ export default function Register() {
         }
       );
 
-      console.log(verifyResponse);
-
       const verifyData = await verifyResponse.json();
-      console.log(verifyData);
       setMessage(verifyData.message);
 
-      // Redirect to login page after successful registration
       if (verifyData.success) {
-        router.push("/login"); // Redirect to login page
+        router.push("/login");
       }
     } catch (error) {
       console.error("Error during registration process:", error);

@@ -1,15 +1,20 @@
 "use client";
 import React, { useState } from "react";
 import { startAuthentication } from "@simplewebauthn/browser";
-import { useRouter } from "next/navigation"; // Import useRouter
+import { useRouter } from "next/navigation";
 
 export default function Login() {
   const [username, setUsername] = useState("");
-  const router = useRouter(); // Initialize useRouter
+  const router = useRouter();
 
   const handleLogin = async () => {
+    console.log("Attempting to log in with username:", username); // Log the username
+    if (!username.trim()) {
+      console.error("Username cannot be empty");
+      return; // Exit if username is empty
+    }
+
     try {
-      // Step 1: Start login
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/auth/login/start`,
         {
@@ -22,14 +27,22 @@ export default function Login() {
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to start login");
-      }
-
       const options = await response.json();
+      console.log("Received options:", options);
+
+      const publicKeyOptions = {
+        rpId: options.rpId,
+        challenge: options.challenge,
+        allowCredentials: options.allowCredentials,
+        timeout: options.timeout,
+        userVerification: options.userVerification,
+      };
+
+      const authOptions = { optionsJSON: publicKeyOptions };
 
       // Step 2: Authenticate using the options
-      const credential = await startAuthentication(options);
+      const credential = await startAuthentication(authOptions);
+      console.log("Credential received:", credential);
 
       if (!credential) {
         console.error(
@@ -51,15 +64,14 @@ export default function Login() {
         }
       );
 
-      const verifyData = await verifyResponse.json();
-
-      // Check if verification was successful and redirect
-      if (verifyResponse.ok) {
-        // Redirect to the dashboard on successful login
-        router.push("/dashboard");
-      } else {
+      if (!verifyResponse.ok) {
+        const verifyData = await verifyResponse.json();
         console.error("Verification failed:", verifyData);
+        return; // Exit if verification failed
       }
+
+      // If verification was successful, redirect to dashboard
+      router.push("/dashboard");
     } catch (error) {
       console.error("Error during login process:", error);
     }
@@ -78,6 +90,7 @@ export default function Login() {
         className="p-2 w-[300px] border-black/20 border rounded-md"
       />
       <button
+        type="button" // Ensure it's a button, not a submit
         className="p-2 bg-green-400 text-white rounded-md"
         onClick={handleLogin}
       >
