@@ -1,20 +1,16 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState } from "react"; // Import useState
 import { startAuthentication } from "@simplewebauthn/browser";
 import { useRouter } from "next/navigation";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
   const router = useRouter();
+  const [loading, setLoading] = useState(false); // Add loading state
 
   const handleLogin = async () => {
-    console.log("Attempting to log in with username:", username); // Log the username
-    if (!username.trim()) {
-      console.error("Username cannot be empty");
-      return; // Exit if username is empty
-    }
-
+    setLoading(true); // Set loading to true at the start of the process
     try {
+      // Step 1: Send a request to initiate authentication
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/auth/login/start`,
         {
@@ -23,22 +19,27 @@ export default function Login() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ username }),
         }
       );
+
+      if (!response.ok) {
+        console.error("Failed to start authentication");
+        setLoading(false); // Set loading to false on failure
+        return;
+      }
 
       const options = await response.json();
       console.log("Received options:", options);
 
-      const publicKeyOptions = {
-        rpId: options.rpId,
-        challenge: options.challenge,
-        allowCredentials: options.allowCredentials,
-        timeout: options.timeout,
-        userVerification: options.userVerification,
+      const authOptions = {
+        optionsJSON: {
+          rpId: options.rpId,
+          challenge: options.challenge,
+          allowCredentials: options.allowCredentials,
+          timeout: options.timeout,
+          userVerification: options.userVerification,
+        },
       };
-
-      const authOptions = { optionsJSON: publicKeyOptions };
 
       // Step 2: Authenticate using the options
       const credential = await startAuthentication(authOptions);
@@ -46,12 +47,13 @@ export default function Login() {
 
       if (!credential) {
         console.error(
-          "No credential was returned, user may have canceled the operation."
+          "No credential was returned; user may have canceled the operation."
         );
+        setLoading(false); // Set loading to false if no credential
         return;
       }
 
-      // Step 3: Send the credential to your backend for verification
+      // Step 3: Send the credential to the backend for verification
       const verifyResponse = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/auth/login/verify`,
         {
@@ -67,13 +69,16 @@ export default function Login() {
       if (!verifyResponse.ok) {
         const verifyData = await verifyResponse.json();
         console.error("Verification failed:", verifyData);
-        return; // Exit if verification failed
+        setLoading(false); // Set loading to false if verification fails
+        return;
       }
 
-      // If verification was successful, redirect to dashboard
+      // If verification is successful, redirect to dashboard
       router.push("/dashboard");
     } catch (error) {
       console.error("Error during login process:", error);
+    } finally {
+      setLoading(false); // Ensure loading is false in any case
     }
   };
 
@@ -82,19 +87,19 @@ export default function Login() {
       <div className="text-2xl text-center text-gray-700">
         Login into the app
       </div>
-      <input
-        type="text"
-        placeholder="Enter your username"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        className="p-2 w-[300px] border-black/20 border rounded-md"
-      />
       <button
         type="button" // Ensure it's a button, not a submit
-        className="p-2 bg-green-400 text-white rounded-md"
+        className={`p-2 bg-green-400 text-white rounded-md ${
+          loading ? "opacity-50 cursor-not-allowed" : ""
+        }`}
         onClick={handleLogin}
+        disabled={loading} // Disable button when loading
       >
-        Login
+        {loading ? (
+          <span>Loading...</span> // Display loading text
+        ) : (
+          <span>Login with Passkey</span>
+        )}
       </button>
     </div>
   );

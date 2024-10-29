@@ -2,13 +2,22 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { startRegistration } from "@simplewebauthn/browser";
+// TODO: Import a toast notification library like react-toastify to handle user feedback
 
 export default function Register() {
   const [username, setUsername] = useState("");
   const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false); // TODO: Add loading state to indicate process progress
   const router = useRouter();
 
   const handleRegister = async () => {
+    // TODO: Add client-side validation to ensure username is not empty
+    if (!username) {
+      // TODO: Show toast error message: "Username cannot be empty."
+      return;
+    }
+
+    setIsLoading(true); // TODO: Set loading to true when starting registration
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/auth/register/start`,
@@ -23,12 +32,13 @@ export default function Register() {
       );
 
       if (!response.ok) {
+        // TODO: Show toast error message if registration initiation fails
         throw new Error("Failed to start registration");
       }
 
       const options = await response.json();
 
-      // Convert challenge to base64url string and user.id to base64url string
+      // TODO: Handle converting challenge and user ID to base64url if necessary
       const publicKeyOptions = {
         challenge: options.challenge,
         rp: options.rp,
@@ -45,10 +55,8 @@ export default function Register() {
         extensions: options.extensions,
       };
 
-      // Wrap the options in optionsJSON
       const registrationOptions = { optionsJSON: publicKeyOptions };
 
-      // Pass the formatted options to startRegistration
       const credential = await startRegistration(registrationOptions);
 
       const formattedCredential = {
@@ -76,12 +84,18 @@ export default function Register() {
       const verifyData = await verifyResponse.json();
       setMessage(verifyData.message);
 
-      if (verifyData.success) {
+      // TODO: Check if `verifyData` includes `status: "success"` to confirm registration
+      if (verifyData.status === "success") {
+        // TODO: Show toast success message for successful registration
         router.push("/login");
+      } else {
+        // TODO: Show toast error message for failed registration
       }
     } catch (error) {
       console.error("Error during registration process:", error);
-      setMessage("Registration failed: " + error);
+      // TODO: Show a generic toast error message on catch, e.g., "Registration failed. Please try again."
+    } finally {
+      setIsLoading(false); // TODO: Reset loading state when registration process completes
     }
   };
 
@@ -100,10 +114,11 @@ export default function Register() {
       <button
         className="p-2 bg-green-400 text-white rounded-md"
         onClick={handleRegister}
+        disabled={isLoading}
       >
-        Register
+        {isLoading ? "Registering..." : "Register"}
       </button>
-      {message && <div className="mt-2 text-center">{message}</div>}
+      {message && <div className="mt-2 text-center">{message}</div>}{" "}
     </div>
   );
 }
