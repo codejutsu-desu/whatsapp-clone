@@ -8,7 +8,7 @@ export default function ChatHeader() {
   const iconColor = "#263238";
 
   return (
-    <div className="py-2 px-3 bg-grey-lighter flex flex-row justify-between items-center">
+    <div className=" px-3 py-2 bg-grey-lighter flex flex-row justify-between items-center">
       <div className="flex items-center">
         <div>
           <Image

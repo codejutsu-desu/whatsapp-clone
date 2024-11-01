@@ -14,7 +14,7 @@ const ChatComponent = () => {
   };
 
   return (
-    <div className="w-2/3 h-[550px] mx-auto border flex flex-col ">
+    <div className="w-full min-h-screen mx-auto border flex flex-col  ">
       <ChatHeader />
       <ChatMessages messages={messages} />
       <ChatInput onSendMessage={handleSendMessage} />
